@@ -24,7 +24,7 @@ ESP32 with SX1276 radio module &ndash;
 * https://github.com/matthias-bs/growatt2lorawan-v2/blob/main/src/AppLayer.h
 * https://github.com/matthias-bs/growatt2lorawan-v2/blob/main/src/AppLayer.cpp
 * Arduino sketch
-   * FSK transmitter configuration based on https://github.com/matthias-bs/SensorTransmitter/blob/main/SensorTransmitter.ino (uses https://github.com/jgromes/RadioLib)
+   * FSK transmitter configuration based on https://github.com/matthias-bs/SensorTransmitter/blob/main/SensorTransmitter.ino (uses [RadioLib](https://github.com/jgromes/RadioLib))
    * Operating sequence
      1. Power-on / wake-up 
      2. Read data from PV inverter via Modbus interface
@@ -38,7 +38,7 @@ ESP32 with SX1276 radio module &ndash;
   * https://github.com/matthias-bs/BresserWeatherSensorReceiver/tree/main/src
   * https://github.com/matthias-bs/BresserWeatherSensorReceiver/blob/main/examples/BresserWeatherSensorMQTT/BresserWeatherSensorMQTT.ino
   * Arduino sketch
-    * FSK receiver configuration and based on [BresserWeatherSensorReceiver](https://github.com/matthias-bs/BresserWeatherSensorReceiver) (uses https://github.com/jgromes/RadioLib)
+    * FSK receiver configuration and based on [BresserWeatherSensorReceiver](https://github.com/matthias-bs/BresserWeatherSensorReceiver) (uses [RadioLib](https://github.com/jgromes/RadioLib))
     * Operating sequence
       * Power-on / wake-up
       * Wait for radio message preamble
