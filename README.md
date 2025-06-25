@@ -2,7 +2,7 @@
 
 [growatt2lorawan-v2](https://github.com/matthias-bs/growatt2lorawan-v2) worked totally fine for quite a while, but now the LoRaWAN node cannot communicate with any public gateway (The Things Network or Helium Network) any more from its present location.
 
-This project is a workaround based on point-to-point radío transmission at 868 MHz using FSK modulation.
+This project is a workaround based on point-to-point radio transmission at 868 MHz using FSK modulation.
 
 The implementation will be based on a few existing projects.
 
