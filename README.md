@@ -1,6 +1,6 @@
 # growatt2radio
 
-[growatt2lorawan-v2](https://github.com/matthias-bs/growatt2lorawan-v2) worked totally fine for quite a while, but now the LoRaWAN node cannot communicate with any public gateway (The Things Network or Helium Network) any more from its present location.
+[growatt2lorawan-v2](https://github.com/matthias-bs/growatt2lorawan-v2) worked totally fine for quite a while, but now the LoRaWAN node cannot communicate with any public gateway (The Things Network or Helium Network) any more from its present location. Presumably a new building and/or its scaffolding within line-of-sight between node and TTN gateway are blocking the radio signal path.
 
 This project is a workaround based on point-to-point radio transmission at 868 MHz using FSK modulation.
 
@@ -13,7 +13,7 @@ ESP32 with SX1276 radio module &ndash;
 ![firebeetle_esp32+cover_lora](https://user-images.githubusercontent.com/83612361/233463592-e99a9d1c-5100-4ac2-9b33-bcfc974406f0.jpg)
 * [DFR0478](https://www.dfrobot.com/product-1590.html) - FireBeetle ESP32 IoT Microcontroller
 * [TEL0125](https://www.dfrobot.com/product-1831.html) - LoRa Radio 868MHz - FireBeetle Covers
-* 868 MHz antenna
+* 868MHz antenna
 
 ## Concept draft
 
