@@ -51,7 +51,7 @@ jobs:
         run:
           |
           # common settings - no extra options, skip nothing, all warnings
-          echo "skip-pattern='gw_receiver.ino'" >> $GITHUB_OUTPUT
+          echo "skip-pattern=''" >> $GITHUB_OUTPUT
           echo "options=''" >> $GITHUB_OUTPUT
           echo "logdef=''" >> $GITHUB_OUTPUT
           echo "warnings='all'" >> $GITHUB_OUTPUT
