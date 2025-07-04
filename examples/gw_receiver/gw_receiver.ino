@@ -51,8 +51,8 @@
 #include <LoraEncoder.h>
 #include <ArduinoJson.h>
 #include <MQTT.h>
-#include "growatt_cfg.h"
 #include "utils/utils.h"
+#include "growatt_cfg.h"
 #include "gw_receiver.h"
 
 
