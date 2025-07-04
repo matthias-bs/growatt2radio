@@ -51,10 +51,9 @@
 #include <LoraEncoder.h>
 #include <ArduinoJson.h>
 #include <MQTT.h>
-#include "utils/utils.h"
-#include "growatt_cfg.h"
+#include <growatt_cfg.h>
+#include <utils/utils.h>
 #include "gw_receiver.h"
-
 
 #define SLEEP_INTERVAL 300    // sleep interval in seconds
 #define RX_TIMEOUT 10000      // sensor receive timeout [ms]
