@@ -40,11 +40,11 @@ ESP32 with SX1276 radio module &ndash;
   * Arduino sketch
     * FSK receiver configuration and based on [BresserWeatherSensorReceiver](https://github.com/matthias-bs/BresserWeatherSensorReceiver) (uses [RadioLib](https://github.com/jgromes/RadioLib))
     * Operating sequence
-      * Power-on / wake-up
-      * Wait for radio message preamble
-      * Receive message
-      * Validate digest and transmitter ID (optional)
-      * De-whitening / decryption?
-      * Convert binary payload buffer to JSON (reverse [lora-serialization](https://github.com/thesolarnomad/lora-serialization))
-      * Publish JSON data using MQTT via WiFi
-      * Sleep
+      1. Power-on / wake-up
+      2. Wait for radio message preamble
+      3. Receive message
+      4. Validate digest and transmitter ID (optional)
+      5. De-whitening / decryption?
+      6. Convert binary payload buffer to JSON (reverse [lora-serialization](https://github.com/thesolarnomad/lora-serialization))
+      7. Publish JSON data using MQTT via WiFi
+      8. Sleep
