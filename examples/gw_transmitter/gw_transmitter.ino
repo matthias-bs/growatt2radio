@@ -35,6 +35,7 @@
 // History:
 //
 // 20250628 Created from https://github.com/matthias-bs/SensorTransmitter
+// 20250709 Fixed digest position and sleep interval, added log message
 //
 // ToDo:
 // - Change syncword to distinguish messages from bresser protocol
@@ -84,7 +85,7 @@ void setup()
     modbusRS485 = digitalRead(INTERFACE_SEL);
 
     // set baud rate
-    if (modbusRS485)
+    if (!modbusRS485)
     {
         Serial.setDebugOutput(false);
         DEBUG_PORT.begin(115200, SERIAL_8N1, DEBUG_RX, DEBUG_TX);
@@ -148,8 +149,8 @@ void setup()
     // |          | [15:8] |  [7:0] |                     |
     // |          | <------------- whitening -----------> |
 
-    msg_buf[0] = digest >> 8;
-    msg_buf[1] = digest & 0xFF;
+    msg_buf[preamble_size] = digest >> 8;
+    msg_buf[preamble_size + 1] = digest & 0xFF;
 
     for (int i = 0; i < uplinkSize + 2; i++)
     {
@@ -158,6 +159,7 @@ void setup()
 
     uint8_t msg_size = preamble_size + 2 + uplinkSize;
     log_i("%s Transmitting packet (%d bytes)... ", TRANSCEIVER_CHIP, msg_size);
+    log_message("TX-Data", msg_buf, msg_size);
     state = radio.transmit(msg_buf, msg_size);
 
     if (state == RADIOLIB_ERR_NONE)
@@ -186,7 +188,7 @@ void setup()
         log_e("failed, code %d", state);
     }
 
-    ESP.deepSleep(SLEEP_INTERVAL * 1000);
+    ESP.deepSleep(SLEEP_INTERVAL * 1000000L);
 }
 
 void loop()
