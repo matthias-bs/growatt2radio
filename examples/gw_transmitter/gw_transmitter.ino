@@ -13,17 +13,17 @@
 // MIT License
 //
 // Copyright (c) 2025 Matthias Prinke
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -36,10 +36,10 @@
 //
 // 20250628 Created from https://github.com/matthias-bs/SensorTransmitter
 // 20250709 Fixed digest position and sleep interval, added log message
+//          Added ESP32 chip_id as transmitter ID to message
 //
 // ToDo:
 // - Change syncword to distinguish messages from bresser protocol
-// - Add ID to allow multiple transmitters within range
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -51,8 +51,9 @@
 #include <utils/utils.h>
 #include "gw_transmitter.h"
 
-#define SLEEP_INTERVAL 300 // sleep interval in seconds
+#define SLEEP_INTERVAL 60  // sleep interval in seconds
 #define MAX_UPLINK_SIZE 256 // maximum uplink size in bytes
+#define OUTPUT_POWER 15 // output power in dBm
 
 /// Modbus interface select: 0 - USB / 1 - RS485
 bool modbusRS485;
@@ -115,12 +116,12 @@ void setup()
     // bit rate:                            8.22 kbps
     // frequency deviation:                 57.136417 kHz
     // Rx bandwidth:                        270.0 kHz (CC1101) / 250 kHz (SX1276)
-    // output power:                        10 dBm
+    // output power:                        <OUTPUT_POWER> dBm
     // preamble length:                     40 bits
     // Preamble: AA AA AA AA AA
     // Sync: 2D D4
     // SX1276 initialization
-    int state = radio.beginFSK(868.3, 8.21, 57.136417, 250, 10, 32);
+    int state = radio.beginFSK(868.3, 8.21, 57.136417, 250, OUTPUT_POWER, 32);
 
     if (state == RADIOLIB_ERR_NONE)
     {
@@ -138,26 +139,42 @@ void setup()
 
     preamble_size = msgBegin(msg_buf);
 
-    memcpy(&msg_buf[preamble_size + 2], uplinkPayload, uplinkSize);
+    memcpy(&msg_buf[preamble_size + 6], uplinkPayload, uplinkSize);
 
-    int digest = lfsr_digest16(&msg_buf[preamble_size + 2], uplinkSize, 0x8005, 0xba95);
+    uint32_t chip_id = 0;
+#if defined(ESP32)
+    for (int i = 0; i < 17; i = i + 8)
+    {
+        chip_id |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+    }
+#elif defined(APPEND_CHIP_ID) && defined(ESP8266)
+    chip_id = ESP.getChipId();
+#endif
+    log_d("ChipID: 0x%08lX", chip_id);
+
+    for (int i = 0; i < 4; i++)
+    {
+        msg_buf[preamble_size + 2 + i] = (chip_id >> (24 - i * 8)) & 0xFF;
+    }
+
+    int digest = lfsr_digest16(&msg_buf[preamble_size + 2], uplinkSize + 4, 0x8005, 0xba95);
     digest ^= 0x6df1;
 
-    // | preamble | byte0  | byte1  | byte2 | ... | byteN |
-    // | -------- |--------|--------|-------|-----|-------|
-    // |          | digest | digest |    <- payload ->    |
-    // |          | [15:8] |  [7:0] |                     |
-    // |          | <------------- whitening -----------> |
+    // | preamble | byte0  | byte1  | byte2   | byte3   | byte4   | byte5   | byte6 | ... | byteN |
+    // | -------- |--------|--------|---------|---------|---------|---------|-------|-----|-------|
+    // |          | digest | digest | chip_id | chip_id | chip_id | chip_id |    <- payload ->    |
+    // |          | [15:8] |  [7:0] | [31:24] | [23:16] |  [15:8] |   [7:0] |     (uplinkSize)    |
+    // |          | <------------- whitening ---------------------------------------------------> |
 
     msg_buf[preamble_size] = digest >> 8;
     msg_buf[preamble_size + 1] = digest & 0xFF;
 
-    for (int i = 0; i < uplinkSize + 2; i++)
+    for (int i = 0; i < uplinkSize + 6; i++)
     {
         msg_buf[preamble_size + i] ^= 0xAA;
     }
 
-    uint8_t msg_size = preamble_size + 2 + uplinkSize;
+    uint8_t msg_size = preamble_size + 6 + uplinkSize;
     log_i("%s Transmitting packet (%d bytes)... ", TRANSCEIVER_CHIP, msg_size);
     log_message("TX-Data", msg_buf, msg_size);
     state = radio.transmit(msg_buf, msg_size);
@@ -165,12 +182,7 @@ void setup()
     if (state == RADIOLIB_ERR_NONE)
     {
         // the packet was successfully transmitted
-        log_i(" success!");
-
-#if defined(USE_SX1276)
-        // print measured data rate
-        log_i("%s Datarate:\t%f bps", TRANSCEIVER_CHIP, radio.getDataRate());
-#endif
+        log_i("success!");
     }
     else if (state == RADIOLIB_ERR_PACKET_TOO_LONG)
     {
