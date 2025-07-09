@@ -30,7 +30,7 @@ ESP32 with SX1276 radio module &ndash;
      2. Read data from PV inverter via Modbus interface
      3. Pack data into binary buffer
      4. Whitening / encryption?
-     5. Add preamble and checksum/digest
+     5. Add preamble, digest and transmitter ID
      6. Transmit packet via radio modem
      7. Sleep
 
@@ -43,7 +43,7 @@ ESP32 with SX1276 radio module &ndash;
       * Power-on / wake-up
       * Wait for radio message preamble
       * Receive message
-      * Validate checksum / digest
+      * Validate digest and transmitter ID (optional)
       * De-whitening / decryption?
       * Convert binary payload buffer to JSON (reverse [lora-serialization](https://github.com/thesolarnomad/lora-serialization))
       * Publish JSON data using MQTT via WiFi
