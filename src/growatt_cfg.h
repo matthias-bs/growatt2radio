@@ -10,7 +10,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2024 Matthias Prinke
+// Copyright (c) 2025 Matthias Prinke
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,8 +33,7 @@
 //
 // History:
 //
-// 20240813 Copied from growatt2lorawan (settings.h)
-// 20250530 Added pinning for Lilygo T3S3 SX1262/SX1276/LR1121
+// 20240709 Copied from growatt2lorawan-v2
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -49,6 +48,7 @@
 
 #define UPDATE_MODBUS   2         // Modbus device is read every <n> seconds
 #define MODBUS_RETRIES  5         // no. of modbus retries
+//#define EMULATE_SENSORS
 
 // Debug printing
 // To enable debug mode (debug messages via serial port):
