@@ -40,7 +40,8 @@
 // History:
 //
 // 20250628 Created from https://github.com/matthias-bs/BresserWeatherSensorReceiver
-//
+// 20250709 Fixed sleep interval, RSSI type and retry reception
+//          Added ESP32 chip_id as transmitter ID to message to allow multiple transceivers
 // ToDo:
 // -
 //
@@ -55,15 +56,18 @@
 #include <utils/utils.h>
 #include "gw_receiver.h"
 
-#define SLEEP_INTERVAL 300    // sleep interval in seconds
-#define RX_TIMEOUT 10000      // sensor receive timeout [ms]
-#define MSG_BUF_SIZE 30       // last byte of preamble + digest (2 bytes) + payload (27 bytes)
-#define MQTT_PAYLOAD_SIZE 256 // define the payload size for MQTT messages
-#define TIMEZONE 1            // UTC + TIMEZONE
+#define SLEEP_INTERVAL 300      // sleep interval in seconds
+#define SLEEP_INTERVAL_SHORT 10 // sleep interval in seconds if receive failed
+#define RX_TIMEOUT 180000       // sensor receive timeout [ms]
+#define TRANSMITTER_ID 0        // 32-bit transmitter ID; 0 - allow any ID
+#define MSG_BUF_SIZE 34         // last byte of preamble + digest (2 Bytes) + tx_id (4 Bytes)
+                                // + payload (27 B)
+#define MQTT_PAYLOAD_SIZE 256   // define the payload size for MQTT messages
+#define TIMEZONE 1              // UTC + TIMEZONE
 // Enter your time zone (https://remotemonitoringsystems.ca/time-zone-abbreviations.php)
 const char *TZ_INFO = "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00";
-#define WIFI_RETRIES 10       // WiFi connection retries
-#define WIFI_DELAY 1000       // Delay between connection attempts [ms]
+#define WIFI_RETRIES 10         // WiFi connection retries
+#define WIFI_DELAY 1000         // Delay between connection attempts [ms]
 
 #define USE_WIFI
 //#define USE_SECUREWIFI
@@ -146,11 +150,6 @@ static const char pubkey[] PROGMEM = R"KEY(
     -----END PUBLIC KEY-----
     )KEY";
 #endif
-
-#ifdef CHECK_FINGERPRINT
-// Extracted by: openssl x509 -fingerprint -in fullchain.pem
-static const char fp[] PROGMEM = "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD";
-#endif
 #endif
 
 // MQTT topics - change if needed
@@ -174,7 +173,7 @@ NetworkClientSecure net;
 //
 MQTTClient client(MQTT_PAYLOAD_SIZE);
 
-static int rssi = 0; // variable to hold the RSSI value
+static float rssi = 0; // variable to hold the RSSI value
 
 // Flag to indicate that a packet was received
 volatile bool receivedFlag = false;
@@ -356,52 +355,6 @@ void mqtt_connect(void)
     client.publish(mqttPubStatus, "online");
 }
 
-#if CORE_DEBUG_LEVEL >= ARDUHAL_LOG_LEVEL_DEBUG
-/*!
- * \brief Log message payload
- *
- * \param descr    Description.
- * \param msg      Message buffer.
- * \param msgSize  Message size.
- *
- * Result (example):
- *  Byte #: 00 01 02 03...
- * <descr>: DE AD BE EF...
- */
-void log_message(const char *descr, const uint8_t *msg, uint8_t msgSize)
-{
-    char buf[128];
-    const char txt[] = "Byte #: ";
-    int offs;
-    int len1 = strlen(txt);
-    int len2 = strlen(descr) + 2; // add colon and space
-    int prefix_len = max(len1, len2);
-
-    memset(buf, ' ', prefix_len);
-    buf[prefix_len] = '\0';
-    offs = (len1 < len2) ? (len2 - len1) : 0;
-    strcpy(&buf[offs], txt);
-
-    // Print byte index
-    for (size_t i = 0; i < msgSize; i++)
-    {
-        sprintf(&buf[strlen(buf)], "%02d ", i);
-    }
-    log_d("%s", buf);
-
-    memset(buf, ' ', prefix_len);
-    buf[prefix_len] = '\0';
-    offs = (len1 > len2) ? (len1 - len2) : 0;
-    sprintf(&buf[offs], "%s: ", descr);
-
-    for (size_t i = 0; i < msgSize; i++)
-    {
-        sprintf(&buf[strlen(buf)], "%02X ", msg[i]);
-    }
-    log_d("%s", buf);
-}
-#endif
-
 int16_t setupRadio()
 {
     log_i("%s Initializing ... ", TRANSCEIVER_CHIP);
@@ -504,7 +457,7 @@ DecodeStatus decodeMessage(const uint8_t *msg, uint8_t msgSize)
 
     // LFSR-16 digest, generator 0x8005 key 0xba95 final xor 0x6df1
     int chkdgst = (msgw[0] << 8) | msgw[1];
-    int digest = lfsr_digest16(&msgw[2], 27, 0x8005, 0xba95);
+    int digest = lfsr_digest16(&msgw[2], 31, 0x8005, 0xba95);
     if ((chkdgst ^ digest) != 0x6df1)
     {
         log_d("Digest check failed - [%04X] vs [%04X] (%04X)", chkdgst, digest, chkdgst ^ digest);
@@ -522,6 +475,17 @@ DecodeStatus decodeMessage(const uint8_t *msg, uint8_t msgSize)
     // [float totalworktime][float outputpower][float gridvoltage][float gridfrequency]
 
     int offset = 2; // skip digest bytes
+    uint32_t transmitter_id = 0;
+    for (int i=0; i < 4; i++) {
+        transmitter_id |= (msgw[offset++] << (24 - i * 8));
+    }
+    log_i("Transmitter ID: %08lX", transmitter_id);
+
+    if (TRANSMITTER_ID != 0 && TRANSMITTER_ID != transmitter_id)
+    {
+        log_i("Transmitter ID mismatch: expected %08lX, got %08lX", TRANSMITTER_ID, transmitter_id);
+        return DECODE_INVALID;
+    }
 
     uint8_t result = msgw[offset++];
     if (result != 0)
@@ -576,6 +540,7 @@ DecodeStatus getMessage(void)
 
         int state = radio.readData(recvData, MSG_BUF_SIZE);
         rssi = radio.getRSSI();
+        radio.startReceive();
 
         if (state == RADIOLIB_ERR_NONE)
         {
@@ -618,8 +583,8 @@ bool getData(uint32_t timeout, void (*func)())
 
     while ((millis() - timestamp) < timeout)
     {
-        int decode_status = getMessage();
-
+        DecodeStatus decode_status = getMessage();
+     
         // Callback function (see https://www.geeksforgeeks.org/callbacks-in-c/)
         if (func)
         {
@@ -631,6 +596,17 @@ bool getData(uint32_t timeout, void (*func)())
             radio.standby();
             return true;
         } // if (decode_status == DECODE_OK)
+        else
+        {
+            if (decode_status == DECODE_DIG_ERR)
+            {
+                log_d("Digest error, retrying...");
+            }
+            else if (decode_status != DECODE_INVALID)
+            {
+                log_d("Unknown decode status: %d", decode_status);
+            }
+        }
     } //  while ((millis() - timestamp) < timeout)
 
     // Timeout
@@ -649,6 +625,8 @@ void setup()
     if (!valid)
     {
         log_e("Failed to get data within timeout.");
+        log_i("Sleeping for %d s\n", SLEEP_INTERVAL_SHORT);
+        ESP.deepSleep(SLEEP_INTERVAL_SHORT * 1000000L);
     }
 
     // Set time zone
@@ -684,11 +662,11 @@ void setup()
     log_i("%s: %s\n", mqttPubData.c_str(), json);
     client.publish(mqttPubData, json, false /* retain */, 0);
     
-    log_i("%s: %d", mqttPubRssi.c_str(), rssi);
+    log_i("%s: %0.1f", mqttPubRssi.c_str(), rssi);
     client.publish(mqttPubRssi, String(rssi, 1), false, 0);
     client.loop();
 
-    log_i("Sleeping for %d ms\n", SLEEP_INTERVAL);
+    log_i("Sleeping for %d s\n", SLEEP_INTERVAL);
     log_i("%s: %s\n", mqttPubStatus.c_str(), "offline");
     Serial.flush();
     client.publish(mqttPubStatus, "offline", true /* retained */, 0 /* qos */);
@@ -696,7 +674,7 @@ void setup()
     client.disconnect();
     net.stop();
 
-    ESP.deepSleep(SLEEP_INTERVAL * 1000);
+    ESP.deepSleep(SLEEP_INTERVAL * 1000000L);
 }
 
 void loop()
