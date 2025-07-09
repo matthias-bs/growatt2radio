@@ -4,7 +4,7 @@
 
 This project is a workaround based on point-to-point radio transmission at 868 MHz using FSK modulation.
 
-The implementation will be based on a few existing projects.
+The implementation is based on a few existing projects.
 
 ## Hardware
 
