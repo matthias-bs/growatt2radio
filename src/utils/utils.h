@@ -61,3 +61,5 @@ uint16_t lfsr_digest16(uint8_t const message[], unsigned bytes, uint16_t gen, ui
  */
 void log_message(const char *descr, const uint8_t *msg, uint8_t msgSize);
 #endif
+
+#endif // UTILS_H
