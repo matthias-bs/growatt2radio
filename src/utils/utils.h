@@ -47,8 +47,6 @@ if !defined(UTILS_H)
 
 uint16_t lfsr_digest16(uint8_t const message[], unsigned bytes, uint16_t gen, uint16_t key);
 
-#endif
-
 #if CORE_DEBUG_LEVEL >= ARDUHAL_LOG_LEVEL_DEBUG
 /*!
  * \brief Log message payload
