@@ -34,17 +34,17 @@ ESP32 with SX1276 radio module &ndash;
      6. Transmit packet via radio modem
      7. Sleep
 
-  ### Receiver
-  * https://github.com/matthias-bs/BresserWeatherSensorReceiver/tree/main/src
-  * https://github.com/matthias-bs/BresserWeatherSensorReceiver/blob/main/examples/BresserWeatherSensorMQTT/BresserWeatherSensorMQTT.ino
-  * Arduino sketch
-    * FSK receiver configuration and based on [BresserWeatherSensorReceiver](https://github.com/matthias-bs/BresserWeatherSensorReceiver) (uses [RadioLib](https://github.com/jgromes/RadioLib))
-    * Operating sequence
-      1. Power-on / wake-up
-      2. Wait for radio message preamble
-      3. Receive message
-      4. Validate digest and transmitter ID (optional)
-      5. De-whitening / decryption?
-      6. Convert binary payload buffer to JSON (reverse [lora-serialization](https://github.com/thesolarnomad/lora-serialization))
-      7. Publish JSON data using MQTT via WiFi
-      8. Sleep
+### Receiver
+* https://github.com/matthias-bs/BresserWeatherSensorReceiver/tree/main/src
+* https://github.com/matthias-bs/BresserWeatherSensorReceiver/blob/main/examples/BresserWeatherSensorMQTT/BresserWeatherSensorMQTT.ino
+* Arduino sketch
+  * FSK receiver configuration and based on [BresserWeatherSensorReceiver](https://github.com/matthias-bs/BresserWeatherSensorReceiver) (uses [RadioLib](https://github.com/jgromes/RadioLib))
+  * Operating sequence
+    1. Power-on / wake-up
+    2. Wait for radio message preamble
+    3. Receive message
+    4. Validate digest and transmitter ID (optional)
+    5. De-whitening / decryption?
+    6. Convert binary payload buffer to JSON (reverse [lora-serialization](https://github.com/thesolarnomad/lora-serialization))
+    7. Publish JSON data using MQTT via WiFi
+    8. Sleep
