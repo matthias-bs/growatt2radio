@@ -37,6 +37,7 @@
 // 20250628 Created from https://github.com/matthias-bs/SensorTransmitter
 // 20250709 Fixed digest position and sleep interval, added log message
 //          Added ESP32 chip_id as transmitter ID to message
+// 20250710 Minor changes
 //
 // ToDo:
 // - Change syncword to distinguish messages from bresser protocol
@@ -53,7 +54,7 @@
 
 #define SLEEP_INTERVAL 60  // sleep interval in seconds
 #define MAX_UPLINK_SIZE 256 // maximum uplink size in bytes
-#define OUTPUT_POWER 15 // output power in dBm
+#define OUTPUT_POWER 10 // output power in dBm
 
 /// Modbus interface select: 0 - USB / 1 - RS485
 bool modbusRS485;
@@ -83,10 +84,10 @@ int msgBegin(uint8_t *msg)
 void setup()
 {
     pinMode(INTERFACE_SEL, INPUT_PULLUP);
-    modbusRS485 = digitalRead(INTERFACE_SEL);
+    modbusRS485 = !digitalRead(INTERFACE_SEL);
 
     // set baud rate
-    if (!modbusRS485)
+    if (modbusRS485)
     {
         Serial.setDebugOutput(false);
         DEBUG_PORT.begin(115200, SERIAL_8N1, DEBUG_RX, DEBUG_TX);
@@ -134,7 +135,7 @@ void setup()
             ;
     }
 
-    uint8_t msg_buf[40];
+    uint8_t msg_buf[50];
     uint8_t preamble_size;
 
     preamble_size = msgBegin(msg_buf);
