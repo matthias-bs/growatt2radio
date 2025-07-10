@@ -34,6 +34,8 @@
 //
 // 20240513 Created
 // 20240316 Implemented genPayload()
+// 20250710 Added inverter temperature to port 1 payload
+//          Added dummy data in case of modbus error
 //
 //
 // ToDo:
@@ -76,6 +78,8 @@ void AppLayer::genPayload(uint8_t port, LoraEncoder &encoder)
         encoder.writeRawFloat(230.0);
         // gridfrequency
         encoder.writeRawFloat(50.0);
+        // tempinverter
+        encoder.writeTemperature(-1.1);
     } else {
         // pv1voltage
         encoder.writeRawFloat(80);
@@ -158,6 +162,7 @@ void AppLayer::getPayloadStage2(uint8_t port, LoraEncoder &encoder)
             encoder.writeRawFloat(growattInterface.modbusdata.outputpower);
             encoder.writeRawFloat(growattInterface.modbusdata.gridvoltage);
             encoder.writeRawFloat(growattInterface.modbusdata.gridfrequency);
+            encoder.writeTemperature(growattInterface.modbusdata.tempinverter);
         }
         else
         {
@@ -168,6 +173,33 @@ void AppLayer::getPayloadStage2(uint8_t port, LoraEncoder &encoder)
             encoder.writeTemperature(growattInterface.modbusdata.tempipm);
             encoder.writeRawFloat(growattInterface.modbusdata.pv1energytoday);
             encoder.writeRawFloat(growattInterface.modbusdata.pv1energytotal);
+        }
+    }
+    else
+    {
+        // If there was an error, write 0 for all values
+        log_e("Error reading data, writing 0s");
+        if (port == 1)
+        {
+            encoder.writeUint8(0); // status
+            encoder.writeUint8(0); // faultcode
+            encoder.writeRawFloat(0.0); // energytoday
+            encoder.writeRawFloat(0.0); // energytotal
+            encoder.writeRawFloat(0.0); // totalworktime
+            encoder.writeRawFloat(0.0); // outputpower
+            encoder.writeRawFloat(0.0); // gridvoltage
+            encoder.writeRawFloat(0.0); // gridfrequency
+            encoder.writeTemperature(0.0); // tempinverter
+        }
+        else
+        {
+            encoder.writeRawFloat(0.0); // pv1voltage
+            encoder.writeRawFloat(0.0); // pv1current
+            encoder.writeRawFloat(0.0); // pv1power
+            encoder.writeTemperature(0.0); // tempinverter
+            encoder.writeTemperature(0.0); // tempipm
+            encoder.writeRawFloat(0.0); // pv1energytoday
+            encoder.writeRawFloat(0.0); // pv1energytotal
         }
     }
 }
