@@ -43,6 +43,8 @@
 // 20250709 Fixed sleep interval, RSSI type and retry reception
 //          Added ESP32 chip_id as transmitter ID to message to allow multiple transceivers
 // 20250710 Added inverter temperature to port 1 payload
+//          Removed TLS fingerprint option (insecure)
+//          Added Modbus status to JSON string
 //
 // ToDo:
 // -
@@ -68,11 +70,11 @@
 #define TIMEZONE 1              // UTC + TIMEZONE
 // Enter your time zone (https://remotemonitoringsystems.ca/time-zone-abbreviations.php)
 const char *TZ_INFO = "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00";
-#define WIFI_RETRIES 10         // WiFi connection retries
-#define WIFI_DELAY 1000         // Delay between connection attempts [ms]
+#define WIFI_RETRIES 10 // WiFi connection retries
+#define WIFI_DELAY 1000 // Delay between connection attempts [ms]
 
 #define USE_WIFI
-//#define USE_SECUREWIFI
+// #define USE_SECUREWIFI
 
 // enable only one of these below, disabling both is fine too.
 #define CHECK_CA_ROOT
@@ -314,9 +316,6 @@ void mqtt_setup(void)
     BearSSL::PublicKey key(pubkey);
     net.setKnownKey(&key);
 #endif
-#ifdef CHECK_FINGERPRINT
-    net.setFingerprint(fp);
-#endif
 #elif defined(ESP32)
 #ifdef CHECK_CA_ROOT
     net.setCACert(digicert);
@@ -324,11 +323,8 @@ void mqtt_setup(void)
 #ifdef CHECK_PUB_KEY
     error "CHECK_PUB_KEY: not implemented"
 #endif
-#ifdef CHECK_FINGERPRINT
-        net.setFingerprint(fp);
 #endif
-#endif
-#if (!defined(CHECK_PUB_KEY) and !defined(CHECK_CA_ROOT) and !defined(CHECK_FINGERPRINT))
+#if (!defined(CHECK_PUB_KEY) and !defined(CHECK_CA_ROOT))
     // do not verify tls certificate
     net.setInsecure();
 #endif
@@ -442,13 +438,11 @@ int16_t setupRadio()
 
 DecodeStatus decodeMessage(const uint8_t *msg, uint8_t msgSize)
 {
-    DecodeStatus decode_res = DECODE_INVALID;
-
-    // | byte0  | byte1  | byte2 | ... | byteN |
-    // |--------|--------|-------|-----|-------|
-    // | digest | digest |    <- payload ->    |
-    // | [15:8] |  [7:0] |                     |
-    // | <------------- whitening -----------> |
+    // | preamble | byte0  | byte1  | byte2   | byte3   | byte4   | byte5   | byte6 | ... | byteN |
+    // | -------- |--------|--------|---------|---------|---------|---------|-------|-----|-------|
+    // |          | digest | digest | chip_id | chip_id | chip_id | chip_id |    <- payload ->    |
+    // |          | [15:8] |  [7:0] | [31:24] | [23:16] |  [15:8] |   [7:0] |     (uplinkSize)    |
+    // |          | <------------- whitening ---------------------------------------------------> |
 
     // data de-whitening
     uint8_t msgw[MSG_BUF_SIZE];
@@ -478,7 +472,8 @@ DecodeStatus decodeMessage(const uint8_t *msg, uint8_t msgSize)
 
     int offset = 2; // skip digest bytes
     uint32_t transmitter_id = 0;
-    for (int i=0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         transmitter_id |= (msgw[offset++] << (24 - i * 8));
     }
     log_i("Transmitter ID: %08lX", transmitter_id);
@@ -492,46 +487,49 @@ DecodeStatus decodeMessage(const uint8_t *msg, uint8_t msgSize)
     uint8_t result = msgw[offset++];
     if (result != 0)
     {
-        log_e("Payload result error: %u", result);
-        return DECODE_INVALID;
+        log_e("Modbus error: %u", result);
     }
 
-    modbusdata.status = msgw[offset++];
-    modbusdata.faultcode = msgw[offset++];
-
-    memcpy(&modbusdata.energytoday, &msgw[offset], sizeof(float));
-    offset += sizeof(float);
-    memcpy(&modbusdata.energytotal, &msgw[offset], sizeof(float));
-    offset += sizeof(float);
-    memcpy(&modbusdata.totalworktime, &msgw[offset], sizeof(float));
-    offset += sizeof(float);
-    memcpy(&modbusdata.outputpower, &msgw[offset], sizeof(float));
-    offset += sizeof(float);
-    memcpy(&modbusdata.gridvoltage, &msgw[offset], sizeof(float));
-    offset += sizeof(float);
-    memcpy(&modbusdata.gridfrequency, &msgw[offset], sizeof(float));
-    offset += sizeof(float);
-    // Decode tempinverter (2 bytes, two's complement)
-    int16_t encodedTemp = (msgw[offset++] << 8) | msgw[offset++]; // Combine high and low bytes
-    modbusdata.tempinverter = encodedTemp / 100.0; // Reverse scaling by dividing by 100
-
-    // --- Convert modbusdata to JSON ---
     JsonDocument doc;
-    doc["status"] = modbusdata.status;
-    doc["faultcode"] = modbusdata.faultcode;
-    doc["energytoday"] = modbusdata.energytoday;
-    doc["energytotal"] = modbusdata.energytotal;
-    doc["totalworktime"] = modbusdata.totalworktime;
-    doc["outputpower"] = modbusdata.outputpower;
-    doc["gridvoltage"] = modbusdata.gridvoltage;
-    doc["gridfrequency"] = modbusdata.gridfrequency;
-    doc["tempinverter"] = modbusdata.tempinverter;
+    doc["modbus"] = result;
+
+    if (result == 0)
+    {
+        modbusdata.status = msgw[offset++];
+        modbusdata.faultcode = msgw[offset++];
+
+        memcpy(&modbusdata.energytoday, &msgw[offset], sizeof(float));
+        offset += sizeof(float);
+        memcpy(&modbusdata.energytotal, &msgw[offset], sizeof(float));
+        offset += sizeof(float);
+        memcpy(&modbusdata.totalworktime, &msgw[offset], sizeof(float));
+        offset += sizeof(float);
+        memcpy(&modbusdata.outputpower, &msgw[offset], sizeof(float));
+        offset += sizeof(float);
+        memcpy(&modbusdata.gridvoltage, &msgw[offset], sizeof(float));
+        offset += sizeof(float);
+        memcpy(&modbusdata.gridfrequency, &msgw[offset], sizeof(float));
+        offset += sizeof(float);
+        // Decode tempinverter (2 bytes, two's complement)
+        int16_t encodedTemp = (msgw[offset++] << 8) | msgw[offset++]; // Combine high and low bytes
+        modbusdata.tempinverter = encodedTemp / 100.0;                // Reverse scaling by dividing by 100
+
+        // --- Convert modbusdata to JSON ---
+        doc["status"] = modbusdata.status;
+        doc["faultcode"] = modbusdata.faultcode;
+        doc["energytoday"] = modbusdata.energytoday;
+        doc["energytotal"] = modbusdata.energytotal;
+        doc["totalworktime"] = modbusdata.totalworktime;
+        doc["outputpower"] = modbusdata.outputpower;
+        doc["gridvoltage"] = modbusdata.gridvoltage;
+        doc["gridfrequency"] = modbusdata.gridfrequency;
+        doc["tempinverter"] = modbusdata.tempinverter;
+    }
 
     serializeJson(doc, json, sizeof(json));
     log_i("Decoded JSON: %s", json);
 
-    decode_res = DECODE_OK;
-    return decode_res;
+    return DECODE_OK;
 }
 
 DecodeStatus getMessage(void)
@@ -590,7 +588,7 @@ bool getData(uint32_t timeout, void (*func)())
     while ((millis() - timestamp) < timeout)
     {
         DecodeStatus decode_status = getMessage();
-     
+
         // Callback function (see https://www.geeksforgeeks.org/callbacks-in-c/)
         if (func)
         {
@@ -667,7 +665,7 @@ void setup()
 
     log_i("%s: %s\n", mqttPubData.c_str(), json);
     client.publish(mqttPubData, json, false /* retain */, 0);
-    
+
     log_i("%s: %0.1f", mqttPubRssi.c_str(), rssi);
     client.publish(mqttPubRssi, String(rssi, 1), false, 0);
     client.loop();
