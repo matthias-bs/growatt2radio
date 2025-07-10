@@ -1,5 +1,9 @@
 # growatt2radio
 
+[![CI](https://github.com/matthias-bs/growatt2radio/actions/workflows/CI.yml/badge.svg)](https://github.com/matthias-bs/growatt2radio/actions/workflows/CI.yml)
+[![GitHub release](https://img.shields.io/github/release/matthias-bs/growatt2radio?maxAge=3600)](https://github.com/matthias-bs/growatt2radio/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/matthias-bs/growatt2radio/blob/main/LICENSE)
+
 [growatt2lorawan-v2](https://github.com/matthias-bs/growatt2lorawan-v2) worked totally fine for quite a while, but now the LoRaWAN node cannot communicate with any public gateway (The Things Network or Helium Network) any more from its present location. Presumably a new building and/or its scaffolding within line-of-sight between node and TTN gateway are blocking the radio signal path.
 
 This project is a workaround based on point-to-point radio transmission at 868 MHz using FSK modulation.
