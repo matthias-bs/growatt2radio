@@ -71,20 +71,10 @@ uint16_t lfsr_digest16(uint8_t const message[], unsigned bytes, uint16_t gen, ui
 }
 
 #if CORE_DEBUG_LEVEL >= ARDUHAL_LOG_LEVEL_DEBUG
-/*!
- * \brief Log message payload
- *
- * \param descr    Description.
- * \param msg      Message buffer.
- * \param msgSize  Message size.
- *
- * Result (example):
- *  Byte #: 00 01 02 03...
- * <descr>: DE AD BE EF...
- */
+// Log message payload
 void log_message(const char *descr, const uint8_t *msg, uint8_t msgSize)
 {
-    char buf[128];
+    char buf[255];
     const char txt[] = "Byte #: ";
     int offs;
     int len1 = strlen(txt);
@@ -113,5 +103,12 @@ void log_message(const char *descr, const uint8_t *msg, uint8_t msgSize)
         sprintf(&buf[strlen(buf)], "%02X ", msg[i]);
     }
     log_d("%s", buf);
+}
+#else
+void log_message(const char *descr, const uint8_t *msg, uint8_t msgSize)
+{
+    (void)descr; // suppress warning regarding unused parameter
+    (void)msg;   // suppress warning regarding unused parameter
+    (void)msgSize; // suppress warning regarding unused parameter
 }
 #endif

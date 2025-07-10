@@ -47,7 +47,6 @@
 
 uint16_t lfsr_digest16(uint8_t const message[], unsigned bytes, uint16_t gen, uint16_t key);
 
-#if CORE_DEBUG_LEVEL >= ARDUHAL_LOG_LEVEL_DEBUG
 /*!
  * \brief Log message payload
  *
@@ -60,6 +59,6 @@ uint16_t lfsr_digest16(uint8_t const message[], unsigned bytes, uint16_t gen, ui
  * <descr>: DE AD BE EF...
  */
 void log_message(const char *descr, const uint8_t *msg, uint8_t msgSize);
-#endif
+
 
 #endif // UTILS_H
