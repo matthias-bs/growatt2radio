@@ -52,3 +52,7 @@ ESP32 with SX1276 radio module &ndash;
     6. Convert binary payload buffer to JSON (reverse [lora-serialization](https://github.com/thesolarnomad/lora-serialization))
     7. Publish JSON data using MQTT via WiFi
     8. Sleep
+
+## Legal
+
+> This project is in no way affiliated with, authorized, maintained, sponsored or endorsed by Growatt or any of its affiliates or subsidiaries.
