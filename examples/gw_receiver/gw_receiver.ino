@@ -42,6 +42,8 @@
 // 20250628 Created from https://github.com/matthias-bs/BresserWeatherSensorReceiver
 // 20250709 Fixed sleep interval, RSSI type and retry reception
 //          Added ESP32 chip_id as transmitter ID to message to allow multiple transceivers
+// 20250710 Added inverter temperature to port 1 payload
+//
 // ToDo:
 // -
 //
@@ -60,8 +62,8 @@
 #define SLEEP_INTERVAL_SHORT 10 // sleep interval in seconds if receive failed
 #define RX_TIMEOUT 180000       // sensor receive timeout [ms]
 #define TRANSMITTER_ID 0        // 32-bit transmitter ID; 0 - allow any ID
-#define MSG_BUF_SIZE 34         // last byte of preamble + digest (2 Bytes) + tx_id (4 Bytes)
-                                // + payload (27 B)
+#define MSG_BUF_SIZE 36         // last byte of preamble + digest (2 Bytes) + tx_id (4 Bytes)
+                                // + payload (29 Bytes)
 #define MQTT_PAYLOAD_SIZE 256   // define the payload size for MQTT messages
 #define TIMEZONE 1              // UTC + TIMEZONE
 // Enter your time zone (https://remotemonitoringsystems.ca/time-zone-abbreviations.php)
@@ -457,7 +459,7 @@ DecodeStatus decodeMessage(const uint8_t *msg, uint8_t msgSize)
 
     // LFSR-16 digest, generator 0x8005 key 0xba95 final xor 0x6df1
     int chkdgst = (msgw[0] << 8) | msgw[1];
-    int digest = lfsr_digest16(&msgw[2], 31, 0x8005, 0xba95);
+    int digest = lfsr_digest16(&msgw[2], msgSize - 2, 0x8005, 0xba95);
     if ((chkdgst ^ digest) != 0x6df1)
     {
         log_d("Digest check failed - [%04X] vs [%04X] (%04X)", chkdgst, digest, chkdgst ^ digest);
@@ -509,6 +511,9 @@ DecodeStatus decodeMessage(const uint8_t *msg, uint8_t msgSize)
     offset += sizeof(float);
     memcpy(&modbusdata.gridfrequency, &msgw[offset], sizeof(float));
     offset += sizeof(float);
+    // Decode tempinverter (2 bytes, two's complement)
+    int16_t encodedTemp = (msgw[offset++] << 8) | msgw[offset++]; // Combine high and low bytes
+    modbusdata.tempinverter = encodedTemp / 100.0; // Reverse scaling by dividing by 100
 
     // --- Convert modbusdata to JSON ---
     JsonDocument doc;
@@ -520,6 +525,7 @@ DecodeStatus decodeMessage(const uint8_t *msg, uint8_t msgSize)
     doc["outputpower"] = modbusdata.outputpower;
     doc["gridvoltage"] = modbusdata.gridvoltage;
     doc["gridfrequency"] = modbusdata.gridfrequency;
+    doc["tempinverter"] = modbusdata.tempinverter;
 
     serializeJson(doc, json, sizeof(json));
     log_i("Decoded JSON: %s", json);
