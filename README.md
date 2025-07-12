@@ -23,7 +23,7 @@ The implementation is based on [a few existing projects](#concept-draft).
   * [Debug Interface in case of using Modbus via USB Interface (optional)](#debug-interface-in-case-of-using-modbus-via-usb-interface-optional)
 * [Library Dependencies](#library-dependencies)
 * [Software Build Configuration](#software-build-configuration)
-* MQTT Integration
+* [MQTT Integration](#mqtt-integration)
   * [IoT MQTT Panel Example](#iot-mqtt-panel-example)
   * [Datacake Integration](#datacake-integration)
   * [Home Assistant Integration](#home-assistant-integration)
@@ -158,7 +158,7 @@ With Datacake, you can get [data reports](https://docs.datacake.de/best-practice
 
 See [scripts/home_assistant_configuration.yaml](scripts/home_assistant_configuration.yaml)
 
-![home_assistant](https://github.com/user-attachments/assets/491dbb38-bb3e-4b93-a675-d21f1bf9f9cd)
+<img width="503" height="710" alt="growatt2radio_home_assistant" src="https://github.com/user-attachments/assets/7f01322b-9a8c-46c6-a543-70ea2acc28f4" />
 
 ## Concept draft
 
