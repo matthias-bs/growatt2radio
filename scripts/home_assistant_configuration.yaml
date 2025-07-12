@@ -1,0 +1,87 @@
+mqtt:    
+  sensor:
+    #
+    # growatt2radio
+    #
+    - name: "PV Inverter Fault Code"
+      unique_id: "0bb87c_faultcode"
+      state_topic: &g2lw_topic "PV-Inverter-Receiver-0BB87C/data"
+      value_template: "{{ value_json.faultcode | int }}"
+      device_class: enum
+      icon: "mdi:state-machine"
+      expire_after: &g2lw_expiry 1200
+      device: &g2lw_device
+        name: "Growatt"
+        identifiers: "Growatt"
+        manufacturer: "Growatt"
+        model: "MIC600TL-X"
+    
+    - name: "PV Inverter Power"
+      unique_id: "0bb87c_power"
+      state_topic: *g2lw_topic
+      value_template: "{{ value_json.outputpower | float }}"
+      device_class: power
+      unit_of_measurement: "W"
+      expire_after: *g2lw_expiry
+      device:
+        <<: *g2lw_device
+    
+    - name: "PV Inverter Energy Today"
+      unique_id: "0bb87c_energytoday"
+      state_topic: *g2lw_topic
+      value_template: "{{ value_json.energytoday | float }}"
+      device_class: energy
+      unit_of_measurement: "kWh"
+      expire_after: *g2lw_expiry
+      device:
+        <<: *g2lw_device
+    
+    - name: "Growatt PV Inverter Energy Total"
+      unique_id: "0bb87c_energytotal"
+      state_topic: *g2lw_topic
+      value_template: "{{ value_json.energytotal | float }}"
+      device_class: energy
+      unit_of_measurement: "kWh"
+      expire_after: *g2lw_expiry
+      device:
+        <<: *g2lw_device
+    
+    - name: "Growatt PV Inverter Grid Voltage"
+      unique_id: "0bb87c_gridvoltage"
+      state_topic: *g2lw_topic
+      value_template: "{{ value_json.gridvoltage | float }}"
+      device_class: voltage
+      unit_of_measurement: "V"
+      expire_after: *g2lw_expiry
+      device:
+        <<: *g2lw_device
+    
+    - name: "Growatt PV Inverter Grid Frequency"
+      unique_id: "0bb87c_gridfrequency"
+      state_topic: *g2lw_topic
+      value_template: "{{ value_json.gridfrequency | float }}"
+      device_class: frequency
+      unit_of_measurement: "Hz"
+      expire_after: *g2lw_expiry
+      device:
+        <<: *g2lw_device
+    
+    - name: "Growatt PV Inverter Temperature"
+      unique_id: "0bb87c_temperature"
+      state_topic: *g2lw_topic
+      value_template: "{{ value_json.tempinverter | float }}"
+      device_class: temperature
+      unit_of_measurement: "C"
+      expire_after: *g2lw_expiry
+      device:
+        <<: *g2lw_device
+    
+    - name: "Growatt PV Inverter Total Worktime"
+      unique_id: "0bb87c_totalworktime"
+      state_topic: *g2lw_topic
+      value_template: "{{ value_json.totalworktime | float(0) }}"
+      device_class: duration
+      unit_of_measurement: "s"
+      expire_after: *g2lw_expiry
+      device:
+        <<: *g2lw_device
