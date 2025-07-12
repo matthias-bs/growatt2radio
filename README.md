@@ -158,7 +158,7 @@ With Datacake, you can get [data reports](https://docs.datacake.de/best-practice
 
 See [scripts/home_assistant_configuration.yaml](scripts/home_assistant_configuration.yaml)
 
-<img width="503" height="710" alt="growatt2radio_home_assistant" src="https://github.com/user-attachments/assets/7f01322b-9a8c-46c6-a543-70ea2acc28f4" />
+<img width="503" height="473" alt="growatt2radio_home_assistant" src="https://github.com/user-attachments/assets/aca5a684-0334-4b44-9a9f-5b2660bf1866" />
 
 ## Concept draft
 
