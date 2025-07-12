@@ -130,7 +130,7 @@ USB-to-TTL converter, e.g. [AZ Delivery HW-598](https://www.az-delivery.de/en/pr
 
 Arduino App: [IoT MQTT Panel](https://snrlab.in/iot/iot-mqtt-panel-user-guide)
 
-<img src="https://user-images.githubusercontent.com/83612361/225129950-c323e0c7-a58b-4a3f-ba30-e0fd9adc1594.jpg" alt="Screenshot_20230314-130325_IoT_MQTT_Panel_Pro-1" width="400">
+<img width="400" alt="growatt2radio_iot_mqtt_panel" src="https://github.com/user-attachments/assets/52eb5a59-34dc-4414-88c6-bac2e6a18c7d" />
 
 You can either edit the provided [IoT MQTT Panel configuration file](scripts/iot_mqtt_panel_growatt2radio.json) before importing it or import it as-is and make the required changes in *IoT MQTT Panel*. Don't forget to add the broker's certificate if using secure MQTT! (in the App: *Connections -> Edit Connections: Certificate path*.)
 
