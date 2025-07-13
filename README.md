@@ -4,7 +4,7 @@
 [![GitHub release](https://img.shields.io/github/release/matthias-bs/growatt2radio?maxAge=3600)](https://github.com/matthias-bs/growatt2radio/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/matthias-bs/growatt2radio/blob/main/LICENSE)
 
-<img width="600" alt="growatt2radio_architecture" src="https://github.com/user-attachments/assets/c2cd14ca-9ffe-4dfe-937e-1ca2d9f2398c" />
+<img width="700" alt="growatt2radio_architecture" src="https://github.com/user-attachments/assets/c2cd14ca-9ffe-4dfe-937e-1ca2d9f2398c" />
 <br>
 <br>
 [growatt2lorawan-v2](https://github.com/matthias-bs/growatt2lorawan-v2) worked totally fine for quite a while, but now my LoRaWAN node cannot communicate with any public gateway (The Things Network or Helium Network) any more from its present location. Presumably a new building and/or its scaffolding within line-of-sight between node and TTN gateway are blocking the radio signal path.
