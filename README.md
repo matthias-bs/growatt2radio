@@ -4,7 +4,11 @@
 [![GitHub release](https://img.shields.io/github/release/matthias-bs/growatt2radio?maxAge=3600)](https://github.com/matthias-bs/growatt2radio/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/matthias-bs/growatt2radio/blob/main/LICENSE)
 
-Point-to-point transmission of PV inverter data (from Modbus interface) via 868 MHz radio signal (FSK modulation) to MQTT client with WiFi interface.
+Point-to-point transmission of PV inverter data via 868 MHz radio signal to MQTT client with WiFi interface.
+
+* Transmitter: Connection to PV inverter via Modbus interface (USB or RS-485)
+* Radio transmission via 868 MHz ISM band; FSK modulation; max. range: ~150 m
+* Revceiver: MQTT client with WiFi interface
 
 <img width="800" alt="growatt2radio_architecture" src="https://github.com/user-attachments/assets/c2cd14ca-9ffe-4dfe-937e-1ca2d9f2398c" />
 <br><br>
