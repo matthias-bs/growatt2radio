@@ -45,6 +45,7 @@
 // 20250710 Added inverter temperature to port 1 payload
 //          Removed TLS fingerprint option (insecure)
 //          Added Modbus status to JSON string
+// 20250802 Fixed MQTT status message topic and disconnect timing
 //
 // ToDo:
 // -
@@ -159,7 +160,6 @@ static const char pubkey[] PROGMEM = R"KEY(
 // MQTT topics - change if needed
 String Hostname = String(HOSTNAME);
 String mqttPubStatus = "status";
-String mqttPubRadio = "radio";
 String mqttPubData = "data";
 String mqttPubRssi = "rssi";
 
@@ -660,6 +660,7 @@ void setup()
     // Prepend Hostname to MQTT topics
     mqttPubData = Hostname + "/" + mqttPubData;
     mqttPubRssi = Hostname + "/" + mqttPubRssi;
+    mqttPubStatus = Hostname + "/" + mqttPubStatus;
 
     mqtt_setup();
 
@@ -674,7 +675,12 @@ void setup()
     log_i("%s: %s\n", mqttPubStatus.c_str(), "offline");
     Serial.flush();
     client.publish(mqttPubStatus, "offline", true /* retained */, 0 /* qos */);
-    client.loop();
+    for (int i = 0; i < 5; i++)
+    {
+        client.loop();
+        delay(500);
+    }
+    delay(1000); // Allow time for the client to disconnect properly
     client.disconnect();
     net.stop();
 
