@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "RadioLib": "jgromes/RadioLib#semver:^7.3.0",
-    "lora-serialization": "thesolarnomad/lora-serialization#semver:^3.2.1",
+    "lora-serialization": "thesolarnomad/lora-serialization#semver:^3.3.1",
     "ArduinoJson": "bblanchon/ArduinoJson#semver:^7.4.2",
     "arduino-mqtt": "256dpi/arduino-mqtt#semver:^2.5.2",
     "ModbusMaster": "4-20ma/ModbusMaster#semver:^2.0.1"
