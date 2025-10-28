@@ -1,6 +1,6 @@
 {
   "name": "growatt2radio",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "P2P Radio Link for Growatt PV Inverter (Modbus Interface)",
   "author": "Matthias Prinke <matthias-bs@web.de>",
   "maintainers": [
@@ -16,7 +16,7 @@
     "src": "src"
   },
   "dependencies": {
-    "RadioLib": "jgromes/RadioLib#semver:^7.3.0",
+    "RadioLib": "jgromes/RadioLib#semver:^7.4.0",
     "lora-serialization": "thesolarnomad/lora-serialization#semver:^3.3.1",
     "ArduinoJson": "bblanchon/ArduinoJson#semver:^7.4.2",
     "arduino-mqtt": "256dpi/arduino-mqtt#semver:^2.5.2",
