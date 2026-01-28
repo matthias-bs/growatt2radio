@@ -1,6 +1,6 @@
 {
   "name": "growatt2radio",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "P2P Radio Link for Growatt PV Inverter (Modbus Interface)",
   "author": "Matthias Prinke <matthias-bs@web.de>",
   "maintainers": [
