@@ -2,12 +2,7 @@
 // gw_receiver.ino
 //
 // Growatt PV-Inverter Radio Receiver
-// based on SX1276/RFM95W and ESP32
-//
-// https://github.com/matthias-bs/growatt2radio
-//
-// Growatt PV-Inverter Radio Receiver
-// based on SX1276/RFM95W and ESP32
+// based on SX1276/RFM95W/SX1262 and ESP32
 //
 // https://github.com/matthias-bs/growatt2radio
 //
@@ -17,7 +12,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2025 Matthias Prinke
+// Copyright (c) 2026 Matthias Prinke
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +41,7 @@
 //          Removed TLS fingerprint option (insecure)
 //          Added Modbus status to JSON string
 // 20250802 Fixed MQTT status message topic and disconnect timing
+// 20260223 Added support for Seeed Studio XIAO ESP32S3 & Wio-SX1262
 //
 // ToDo:
 // -
@@ -75,7 +71,7 @@ const char *TZ_INFO = "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00";
 #define WIFI_DELAY 1000 // Delay between connection attempts [ms]
 
 #define USE_WIFI
-// #define USE_SECUREWIFI
+//#define USE_SECUREWIFI
 
 // enable only one of these below, disabling both is fine too.
 #define CHECK_CA_ROOT
@@ -198,7 +194,11 @@ void setFlag(void)
 // DIO0 pin:  PIN_TRANSCEIVER_IRQ
 // RESET pin: PIN_TRANSCEIVER_RST
 // DIO1 pin:  PIN_TRANSCEIVER_GPIO
+#if defined USE_SX1262
+static SX1262 radio = new Module(PIN_TRANSCEIVER_CS, PIN_TRANSCEIVER_IRQ, PIN_TRANSCEIVER_RST, PIN_TRANSCEIVER_GPIO);
+#else
 static SX1276 radio = new Module(PIN_TRANSCEIVER_CS, PIN_TRANSCEIVER_IRQ, PIN_TRANSCEIVER_RST, PIN_TRANSCEIVER_GPIO);
+#endif
 
 struct modbus_input_registers
 {
@@ -359,13 +359,19 @@ int16_t setupRadio()
     // carrier frequency:                   868.3 MHz
     // bit rate:                            8.22 kbps
     // frequency deviation:                 57.136417 kHz
-    // Rx bandwidth:                        270.0 kHz (CC1101) / 250 kHz (SX1276)
+    // Rx bandwidth:                        270.0 kHz (CC1101) / 250 kHz (SX1276) / 234.3 kHz (SX1262)
     // output power:                        10 dBm
     // preamble length:                     40 bits
     // Preamble: AA AA AA AA AA
     // Sync: 2D D4
+
+    #if defined(USE_SX1262)
+    // SX1262 initialization
+    int state = radio.beginFSK(868.3, 8.21, 57.136417, 234.3, 10, 32);
+    #else
     // SX1276 initialization
     int state = radio.beginFSK(868.3, 8.21, 57.136417, 250, 10, 32);
+    #endif
 
     if (state == RADIOLIB_ERR_NONE)
     {
@@ -378,6 +384,18 @@ int16_t setupRadio()
             ;
     }
 
+#if defined(ARDUINO_XIAO_ESP32S3)
+    // set RF switch control configuration
+    radio.setRfSwitchPins(38, RADIOLIB_NC);
+
+    // TCXO Voltage according to
+    // https://files.seeedstudio.com/products/SenseCAP/Wio_SX1262/Wio-SX1262_Module_Datasheet.pdf:
+    // 1.7~3.3V
+    //
+    // Set to 1.7V as recommended by Seeed Studio Support
+    radio.setTCXO(1.7);
+#endif
+
     if (state == RADIOLIB_ERR_NONE)
     {
         log_d("success!");
@@ -388,8 +406,12 @@ int16_t setupRadio()
             while (true)
                 delay(10);
         }
-
+        #if defined(USE_SX1262)
+        state = radio.setCRC(0);
+        #else
         state = radio.setCrcFiltering(false);
+        #endif
+
         if (state != RADIOLIB_ERR_NONE)
         {
             log_e("%s Error disabling crc filtering: [%d]", TRANSCEIVER_CHIP, state);
@@ -511,8 +533,8 @@ DecodeStatus decodeMessage(const uint8_t *msg, uint8_t msgSize)
         memcpy(&modbusdata.gridfrequency, &msgw[offset], sizeof(float));
         offset += sizeof(float);
         // Decode tempinverter (2 bytes, two's complement)
-        int16_t encodedTemp = (msgw[offset++] << 8) | msgw[offset++]; // Combine high and low bytes
-        modbusdata.tempinverter = encodedTemp / 100.0;                // Reverse scaling by dividing by 100
+        int16_t encodedTemp = (msgw[offset] << 8) | msgw[offset+1]; // Combine high and low bytes
+        modbusdata.tempinverter = encodedTemp / 100.0;              // Reverse scaling by dividing by 100
 
         // --- Convert modbusdata to JSON ---
         doc["status"] = modbusdata.status;

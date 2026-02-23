@@ -2,7 +2,7 @@
 // gw_transmitter.ino
 //
 // Growatt PV-Inverter Radio Transmitter
-// based on SX1276/RFM95W and ESP32
+// based on SX1276/RFM95W/SX1262 and ESP32
 //
 // https://github.com/matthias-bs/growatt2radio
 //
@@ -12,7 +12,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2025 Matthias Prinke
+// Copyright (c) 2026 Matthias Prinke
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +38,7 @@
 // 20250709 Fixed digest position and sleep interval, added log message
 //          Added ESP32 chip_id as transmitter ID to message
 // 20250710 Minor changes
+// 20260223 Added support for Seeed Studio XIAO ESP32S3 & Wio-SX1262
 //
 // ToDo:
 // - Change syncword to distinguish messages from bresser protocol
@@ -67,7 +68,11 @@ AppLayer appLayer;
 // DIO0 pin:  PIN_TRANSCEIVER_IRQ
 // RESET pin: PIN_TRANSCEIVER_RST
 // DIO1 pin:  PIN_TRANSCEIVER_GPIO
+#if defined USE_SX1262
+static SX1262 radio = new Module(PIN_TRANSCEIVER_CS, PIN_TRANSCEIVER_IRQ, PIN_TRANSCEIVER_RST, PIN_TRANSCEIVER_GPIO);
+#else
 static SX1276 radio = new Module(PIN_TRANSCEIVER_CS, PIN_TRANSCEIVER_IRQ, PIN_TRANSCEIVER_RST, PIN_TRANSCEIVER_GPIO);
+#endif
 
 int msgBegin(uint8_t *msg)
 {
@@ -87,7 +92,7 @@ void setup()
     modbusRS485 = !digitalRead(INTERFACE_SEL);
 
     // set baud rate
-    if (modbusRS485)
+    if (!modbusRS485)
     {
         Serial.setDebugOutput(false);
         DEBUG_PORT.begin(115200, SERIAL_8N1, DEBUG_RX, DEBUG_TX);
@@ -121,8 +126,26 @@ void setup()
     // preamble length:                     40 bits
     // Preamble: AA AA AA AA AA
     // Sync: 2D D4
+    
+    #if defined(USE_SX1262)
+    // SX1262 initialization
+    int state = radio.beginFSK(868.3, 8.21, 57.136417, 234.3, OUTPUT_POWER, 32);
+    #else
     // SX1276 initialization
     int state = radio.beginFSK(868.3, 8.21, 57.136417, 250, OUTPUT_POWER, 32);
+    #endif
+
+#if defined(ARDUINO_XIAO_ESP32S3)
+    // set RF switch control configuration
+    radio.setRfSwitchPins(38, RADIOLIB_NC);
+
+    // TCXO Voltage according to
+    // https://files.seeedstudio.com/products/SenseCAP/Wio_SX1262/Wio-SX1262_Module_Datasheet.pdf:
+    // 1.7~3.3V
+    //
+    // Set to 1.7V as recommended by Seeed Studio Support
+    radio.setTCXO(1.7);
+#endif
 
     if (state == RADIOLIB_ERR_NONE)
     {

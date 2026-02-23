@@ -10,7 +10,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2025 Matthias Prinke
+// Copyright (c) 2026 Matthias Prinke
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@
 // History:
 //
 // 20240709 Copied from growatt2lorawan-v2
+// 20240710 Added support for Seeed Studio XIAO ESP32S3 & Wio-SX1262
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -110,6 +111,17 @@
     #define MAX485_TX       40        // D6, DI pin on the TTL to RS485 converter
     #define DEBUG_TX        34        // Serial port output to   USB converter (optional)
     #define DEBUG_RX        33        // Serial port input  from USB converter (n.c.)
+
+#elif defined(ARDUINO_XIAO_ESP32S3)
+    // https://github.com/espressif/arduino-esp32/blob/master/variants/XIAO_ESP32S3/pins_arduino.h
+    // https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/
+    #define INTERFACE_SEL   7         // D8, Modbus interface select (0: USB / 1: RS485)
+    #define MAX485_DE       1         // D0, DE pin on the TTL
+    #define MAX485_RE_NEG   2         // D1, RE pin on the TTL to RS485 converter
+    #define MAX485_RX       3         // D2, RO pin on the TTL
+    #define MAX485_TX       4         // D3, DI pin on the TTL to RS485 converter
+    #define DEBUG_TX        43        // Serial port output to   USB converter (optional)
+    #define DEBUG_RX        44        // Serial port input  from USB converter (n.c.)
 
 #else
     // for generic CI target ESP32:ESP32:ESP32

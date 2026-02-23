@@ -2,7 +2,7 @@
 // gw_receiver.h
 //
 // Growatt PV-Inverter Radio Receiver
-// based on SX1276/RFM95W and ESP32
+// based on SX1276/RFM95W/SX1262 and ESP32
 //
 // https://github.com/matthias-bs/growatt2radio
 //
@@ -11,7 +11,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2025 Matthias Prinke
+// Copyright (c) 2026 Matthias Prinke
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@
 //
 // History:
 // 20250628 Created based on BresserWeatherSensorReceiver and SensorTransmitter
+// 20260223 Added support for Seeed Studio XIAO ESP32S3 & Wio-SX1262
 //
 // ToDo:
 // -
@@ -189,6 +190,15 @@ typedef enum DecodeStatus {
         
     #endif
 
+#elif defined(ARDUINO_XIAO_ESP32S3)
+    #pragma message("ARDUINO_XIAO_ESP32S3 defined; assuming Wio-SX1262 will be used")
+    #define USE_SX1262
+    // Use pinning for Seeed XIAO ESP32S3 with Wio-SX1262
+    #define PIN_RECEIVER_CS   41
+    #define PIN_RECEIVER_IRQ  39
+    #define PIN_RECEIVER_GPIO 40
+    #define PIN_RECEIVER_RST  42
+
 #elif defined(ESP32)
     #pragma message("ESP32 defined; this is a generic (i.e. non-specific) target")
     #pragma message("Cross check if the selected GPIO pins are really available on your board.")
@@ -334,6 +344,16 @@ typedef enum DecodeStatus {
 
     // RFM95W/SX127x - GPIOxx / CC1101 - RADIOLIB_NC
     #define PIN_TRANSCEIVER_RST  27
+
+#elif defined(ARDUINO_XIAO_ESP32S3)
+    #pragma message("ARDUINO_XIAO_ESP32S3 defined; assuming Wio-SX1262 will be used")
+    #define USE_SX1262
+    
+    // Use pinning for Seeed XIAO ESP32S3 with Wio-SX1262
+    #define PIN_TRANSCEIVER_CS   41
+    #define PIN_TRANSCEIVER_IRQ  39
+    #define PIN_TRANSCEIVER_GPIO 40
+    #define PIN_TRANSCEIVER_RST  42
 
 #elif defined(ESP32)
     // Generic pinning for ESP32 development boards
