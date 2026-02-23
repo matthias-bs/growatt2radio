@@ -533,8 +533,8 @@ DecodeStatus decodeMessage(const uint8_t *msg, uint8_t msgSize)
         memcpy(&modbusdata.gridfrequency, &msgw[offset], sizeof(float));
         offset += sizeof(float);
         // Decode tempinverter (2 bytes, two's complement)
-        int16_t encodedTemp = (msgw[offset++] << 8) | msgw[offset++]; // Combine high and low bytes
-        modbusdata.tempinverter = encodedTemp / 100.0;                // Reverse scaling by dividing by 100
+        int16_t encodedTemp = (msgw[offset] << 8) | msgw[offset+1]; // Combine high and low bytes
+        modbusdata.tempinverter = encodedTemp / 100.0;              // Reverse scaling by dividing by 100
 
         // --- Convert modbusdata to JSON ---
         doc["status"] = modbusdata.status;
