@@ -39,6 +39,7 @@
 //          Added ESP32 chip_id as transmitter ID to message
 // 20250710 Minor changes
 // 20260223 Added support for Seeed Studio XIAO ESP32S3 & Wio-SX1262
+// 20260620 Changed radio initialization to new ConfigFSK_t structure in RadioLib 7.7.x
 //
 // ToDo:
 // - Change syncword to distinguish messages from bresser protocol
@@ -118,22 +119,22 @@ void setup()
     uint8_t uplinkSize = encoder.getLength();
 
     log_i("%s Initializing ... ", TRANSCEIVER_CHIP);
-    // carrier frequency:                   868.3 MHz
-    // bit rate:                            8.22 kbps
-    // frequency deviation:                 57.136417 kHz
-    // Rx bandwidth:                        270.0 kHz (CC1101) / 250 kHz (SX1276)
-    // output power:                        <OUTPUT_POWER> dBm
-    // preamble length:                     40 bits
-    // Preamble: AA AA AA AA AA
-    // Sync: 2D D4
-    
-    #if defined(USE_SX1262)
-    // SX1262 initialization
-    int state = radio.beginFSK(868.3, 8.21, 57.136417, 234.3, OUTPUT_POWER, 32);
-    #else
-    // SX1276 initialization
-    int state = radio.beginFSK(868.3, 8.21, 57.136417, 250, OUTPUT_POWER, 32);
-    #endif
+
+    ConfigFSK_t config;
+    config.frequency = 868.3;              // MHz
+    config.bitRate = 8.21;                 // kBaud
+    config.frequencyDeviation = 57.136417; // kHz
+    config.power = OUTPUT_POWER;           // dBm
+    config.preambleLength = 32;            // bits
+
+#if defined(USE_SX1276)
+    config.receiverBandwidth = 250;
+#else
+    // USE_SX1262
+    config.receiverBandwidth = 234.3;
+#endif
+
+    int state = radio.beginFSK(config);
 
 #if defined(ARDUINO_XIAO_ESP32S3)
     // set RF switch control configuration

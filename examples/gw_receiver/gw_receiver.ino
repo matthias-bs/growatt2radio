@@ -42,6 +42,7 @@
 //          Added Modbus status to JSON string
 // 20250802 Fixed MQTT status message topic and disconnect timing
 // 20260223 Added support for Seeed Studio XIAO ESP32S3 & Wio-SX1262
+// 20260620 Changed radio initialization to new ConfigFSK_t structure in RadioLib 7.7.x
 //
 // ToDo:
 // -
@@ -356,22 +357,22 @@ void mqtt_connect(void)
 int16_t setupRadio()
 {
     log_i("%s Initializing ... ", TRANSCEIVER_CHIP);
-    // carrier frequency:                   868.3 MHz
-    // bit rate:                            8.22 kbps
-    // frequency deviation:                 57.136417 kHz
-    // Rx bandwidth:                        270.0 kHz (CC1101) / 250 kHz (SX1276) / 234.3 kHz (SX1262)
-    // output power:                        10 dBm
-    // preamble length:                     40 bits
-    // Preamble: AA AA AA AA AA
-    // Sync: 2D D4
 
-    #if defined(USE_SX1262)
-    // SX1262 initialization
-    int state = radio.beginFSK(868.3, 8.21, 57.136417, 234.3, 10, 32);
-    #else
-    // SX1276 initialization
-    int state = radio.beginFSK(868.3, 8.21, 57.136417, 250, 10, 32);
-    #endif
+    ConfigFSK_t config;
+    config.frequency = 868.3;              // MHz
+    config.bitRate = 8.21;                 // kBaud
+    config.frequencyDeviation = 57.136417; // kHz
+    config.power = 10;                     // dBm
+    config.preambleLength = 32;            // bits
+
+#if defined(USE_SX1276)
+    config.receiverBandwidth = 250;
+#else
+    // USE_SX1262
+    config.receiverBandwidth = 234.3;
+#endif
+
+    int state = radio.beginFSK(config);
 
     if (state == RADIOLIB_ERR_NONE)
     {
