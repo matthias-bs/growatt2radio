@@ -43,6 +43,7 @@
 // 20250802 Fixed MQTT status message topic and disconnect timing
 // 20260223 Added support for Seeed Studio XIAO ESP32S3 & Wio-SX1262
 // 20260620 Changed radio initialization to new ConfigFSK_t structure in RadioLib 7.7.x
+// 20261109 Updated configuration to RadioLib 8.0.0
 //
 // ToDo:
 // -
@@ -359,17 +360,17 @@ int16_t setupRadio()
     log_i("%s Initializing ... ", TRANSCEIVER_CHIP);
 
     ConfigFSK_t config;
-    config.frequency = 868.3;              // MHz
-    config.bitRate = 8.21;                 // kBaud
-    config.frequencyDeviation = 57.136417; // kHz
-    config.power = 10;                     // dBm
-    config.preambleLength = 32;            // bits
+    config.frequency = 868300000;                                  // Hz
+    config.bitRate = 8210;                                         // Baud
+    config.frequencyDeviation = RADIOLIB_UNIT_KILO_FLT(57.136417); // Hz
+    config.power = 10;                                             // dBm
+    config.preambleLength = 32;                                    // bits
 
 #if defined(USE_SX1276)
-    config.receiverBandwidth = 250;
+    config.receiverBandwidth = RADIOLIB_UNIT_KILO(250);
 #else
     // USE_SX1262
-    config.receiverBandwidth = 234.3;
+    config.receiverBandwidth = RADIOLIB_UNIT_KILO_FLT(234.3);
 #endif
 
     int state = radio.beginFSK(config);
@@ -394,7 +395,7 @@ int16_t setupRadio()
     // 1.7~3.3V
     //
     // Set to 1.7V as recommended by Seeed Studio Support
-    radio.setTCXO(1.7);
+    radio.setTCXO(RadioLibTCXOVoltage_t::Voltage1V7);
 #endif
 
     if (state == RADIOLIB_ERR_NONE)
@@ -409,6 +410,8 @@ int16_t setupRadio()
         }
         #if defined(USE_SX1262)
         state = radio.setCRC(0);
+        #elif defined(USE_SX1276)
+        state = radio.setCRC(false);
         #else
         state = radio.setCrcFiltering(false);
         #endif
@@ -446,7 +449,7 @@ int16_t setupRadio()
     rssi = radio.getRSSI();
 
     // Set callback function
-    radio.setPacketReceivedAction(setFlag);
+    radio.setIrqAction(setFlag);
 
     state = radio.startReceive();
     if (state != RADIOLIB_ERR_NONE)
