@@ -449,7 +449,7 @@ int16_t setupRadio()
     rssi = radio.getRSSI();
 
     // Set callback function
-    radio.setPacketIrqAction(setFlag);
+    radio.setIrqAction(setFlag);
 
     state = radio.startReceive();
     if (state != RADIOLIB_ERR_NONE)
